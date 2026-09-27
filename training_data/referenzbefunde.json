@@ -1,0 +1,134 @@
+{
+  "hinweis": "SYNTHETISCH – Referenzbefunde für das Künz-Agententraining. Grundlage für Übung 10, die CI-Referenztests (Übung 11), Übung 12, 16 und 18.",
+  "catalog_id": "AK-FBS",
+  "catalog_version": "1.0",
+  "pruefungen": [
+    {
+      "document_id": "SPEC-001",
+      "document_version": "1",
+      "review_ids": ["PR-001", "PR-101", "PR-102", "PR-103", "PR-104", "PR-105"],
+      "klaerungspunkte": ["R-03", "R-05"],
+      "befunde": [
+        {
+          "requirement_id": "R-01",
+          "soll": "Teilmenge von {DE, EN}",
+          "ist": "Deutsch und Englisch",
+          "ist_wert": ["DE", "EN"],
+          "fundstellen": [{"document_id": "SPEC-001", "document_version": "1", "abschnitt": "2.1", "zitat": "in deutscher und englischer Sprache"}],
+          "status": "erfüllt",
+          "begruendung": "Gefordert sind Deutsch und Englisch; beide Sprachen liefert Künz."
+        },
+        {
+          "requirement_id": "R-02",
+          "soll": "höchstens 41 t",
+          "ist": "41 t",
+          "ist_wert": 41,
+          "fundstellen": [{"document_id": "SPEC-001", "document_version": "1", "abschnitt": "2.3", "zitat": "von 41 t bleibt unverändert"}],
+          "status": "erfüllt",
+          "begruendung": "Die Tragfähigkeit bleibt beim Bestand von 41 t."
+        },
+        {
+          "requirement_id": "R-03",
+          "soll": "Protokollversion mindestens 2.0",
+          "ist": "Protokollversion 1.4",
+          "ist_wert": "1.4",
+          "fundstellen": [{"document_id": "SPEC-001", "document_version": "1", "abschnitt": "3.2", "zitat": "in Protokollversion 1.4 bleibt unverändert"}],
+          "status": "abweichend",
+          "begruendung": "Die Spezifikation behält Protokollversion 1.4 bei und schließt ein Upgrade aus; der Fernbetrieb setzt mindestens 2.0 voraus."
+        },
+        {
+          "requirement_id": "R-04",
+          "soll": "höchstens 50 ms",
+          "ist": "höchstens 30 ms",
+          "ist_wert": [30],
+          "fundstellen": [{"document_id": "SPEC-001", "document_version": "1", "abschnitt": "4.1", "zitat": "Die Latenz beträgt höchstens 30 ms."}],
+          "status": "erfüllt",
+          "begruendung": "Zugesichert sind höchstens 30 ms, also unter der Grenze von 50 ms."
+        },
+        {
+          "requirement_id": "R-05",
+          "soll": "Bereich angegeben und innerhalb −20 °C bis +40 °C",
+          "ist": null,
+          "ist_wert": null,
+          "fundstellen": [],
+          "status": "unklar",
+          "begruendung": "Die Spezifikation nennt keinen Betriebstemperaturbereich des Krans. Abschnitt 6.1 betrifft nur den klimatisierten Aufstellraum des Fernbedienstands; der Wert aus der Anlagenübersicht AUE-A100 ist keine Angabe der Spezifikation."
+        },
+        {
+          "requirement_id": "R-06",
+          "soll": "Zugangsüberwachung mit Personenerkennung, sperrt den Fernbetrieb",
+          "ist": "Laserscanner an den Zugängen zur Kranbahn; Fernbetrieb gesperrt bei Personen im Arbeitsbereich",
+          "ist_wert": "Laserscanner, Sperre bei Personen im Arbeitsbereich",
+          "fundstellen": [{"document_id": "SPEC-001", "document_version": "1", "abschnitt": "5.2", "zitat": "mit Laserscannern überwacht"}],
+          "status": "erfüllt",
+          "begruendung": "Laserscanner mit Sperre des Fernbetriebs entsprechen der Anforderung."
+        }
+      ]
+    },
+    {
+      "document_id": "SPEC-001",
+      "document_version": "2",
+      "review_ids": ["PR-201"],
+      "klaerungspunkte": ["R-04", "R-05"],
+      "befunde": [
+        {
+          "requirement_id": "R-01",
+          "soll": "Teilmenge von {DE, EN}",
+          "ist": "Deutsch und Englisch",
+          "ist_wert": ["DE", "EN"],
+          "fundstellen": [{"document_id": "SPEC-001", "document_version": "2", "abschnitt": "2.1", "zitat": "in deutscher und englischer Sprache"}],
+          "status": "erfüllt",
+          "begruendung": "Unverändert gegenüber Version 1."
+        },
+        {
+          "requirement_id": "R-02",
+          "soll": "höchstens 41 t",
+          "ist": "41 t",
+          "ist_wert": 41,
+          "fundstellen": [{"document_id": "SPEC-001", "document_version": "2", "abschnitt": "2.3", "zitat": "von 41 t bleibt unverändert"}],
+          "status": "erfüllt",
+          "begruendung": "Unverändert gegenüber Version 1."
+        },
+        {
+          "requirement_id": "R-03",
+          "soll": "Protokollversion mindestens 2.0",
+          "ist": "Protokollversion 2.1",
+          "ist_wert": "2.1",
+          "fundstellen": [{"document_id": "SPEC-001", "document_version": "2", "abschnitt": "3.2", "zitat": "in Protokollversion 2.1 aktualisiert"}],
+          "status": "erfüllt",
+          "begruendung": "Version 2 nimmt das Upgrade auf Protokollversion 2.1 auf."
+        },
+        {
+          "requirement_id": "R-04",
+          "soll": "höchstens 50 ms",
+          "ist": "widersprüchlich: höchstens 30 ms (4.1) und bis zu 80 ms (A.1)",
+          "ist_wert": [30, 80],
+          "fundstellen": [
+            {"document_id": "SPEC-001", "document_version": "2", "abschnitt": "4.1", "zitat": "Die Latenz beträgt höchstens 30 ms."},
+            {"document_id": "SPEC-001", "document_version": "2", "abschnitt": "A.1", "zitat": "bis zu 80 ms Latenz eingeplant"}
+          ],
+          "status": "unklar",
+          "begruendung": "Abschnitt 4.1 sichert höchstens 30 ms zu, Anhang A.1 plant bis zu 80 ms ein. Der Widerspruch muss mit dem Kunden geklärt werden."
+        },
+        {
+          "requirement_id": "R-05",
+          "soll": "Bereich angegeben und innerhalb −20 °C bis +40 °C",
+          "ist": "−20 °C bis +45 °C",
+          "ist_wert": [-20, 45],
+          "fundstellen": [{"document_id": "SPEC-001", "document_version": "2", "abschnitt": "6.2", "zitat": "von −20 °C bis +45 °C"}],
+          "status": "abweichend",
+          "begruendung": "Gefordert sind bis +45 °C; A-100 ist bis +40 °C ausgelegt."
+        },
+        {
+          "requirement_id": "R-06",
+          "soll": "Zugangsüberwachung mit Personenerkennung, sperrt den Fernbetrieb",
+          "ist": "Laserscanner an den Zugängen zur Kranbahn; Fernbetrieb gesperrt bei Personen im Arbeitsbereich",
+          "ist_wert": "Laserscanner, Sperre bei Personen im Arbeitsbereich",
+          "fundstellen": [{"document_id": "SPEC-001", "document_version": "2", "abschnitt": "5.2", "zitat": "mit Laserscannern überwacht"}],
+          "status": "erfüllt",
+          "begruendung": "Unverändert gegenüber Version 1."
+        }
+      ]
+    }
+  ]
+}

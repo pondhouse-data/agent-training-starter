@@ -1,0 +1,14 @@
+name: PR-Referenztests
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  referenztests:
+    name: referenztests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: uv run --locked pytest -q

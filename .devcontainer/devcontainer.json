@@ -1,0 +1,12 @@
+{
+  "name": "MAF-Training Python 3.12",
+  "build": { "dockerfile": "Dockerfile" },
+  "features": { "ghcr.io/devcontainers/features/azure-cli:1": {} },
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "GitHub.copilot", "GitHub.copilot-chat"]
+    }
+  },
+  "postCreateCommand": "uv sync",
+  "hostRequirements": { "cpus": 2 }
+}

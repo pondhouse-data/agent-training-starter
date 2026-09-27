@@ -1,0 +1,51 @@
+{
+  "catalog_id": "AK-FBS",
+  "version": "1.0",
+  "titel": "Interner Anforderungskatalog – Nachrüstung Fernbedienstand an RMG-Intermodalkranen",
+  "asset_ids": ["A-100"],
+  "hinweis": "SYNTHETISCH – für das Künz-Agententraining erfunden, keine gültige Künz-Vorgabe.",
+  "grundregeln": [
+    "Fehlt die Angabe in der Spezifikation, ist der Befund 'unklar' – nie automatisch 'erfüllt' oder 'abweichend'.",
+    "Widersprechen sich Angaben innerhalb der Spezifikation, ist der Befund 'unklar'; alle widersprüchlichen Fundstellen werden genannt.",
+    "Jede Fundstelle muss im Originaltext der geprüften Dokumentversion vorkommen.",
+    "Geprüft wird nur in eine Richtung: Spezifikation gegen diesen Katalog. Kundenforderungen ohne passende interne Anforderung (z. B. SPEC-001 §3.4) sind nicht Teil der Prüfung."
+  ],
+  "requirements": [
+    {
+      "requirement_id": "R-01",
+      "thema": "Dokumentationssprache",
+      "soll": "Geforderte Dokumentationssprachen sind Deutsch und/oder Englisch; Künz liefert Dokumentation in DE und EN.",
+      "vergleichsregel": {"typ": "teilmenge", "erlaubt": ["DE", "EN"]}
+    },
+    {
+      "requirement_id": "R-02",
+      "thema": "Tragfähigkeit",
+      "soll": "Geforderte Tragfähigkeit unter Spreader höchstens 41 t (Bestand A-100, AUE-A100 §2).",
+      "vergleichsregel": {"typ": "maximum", "grenzwert": 41, "einheit": "t"}
+    },
+    {
+      "requirement_id": "R-03",
+      "thema": "TOS-Schnittstelle",
+      "soll": "Fernbetrieb setzt das Künz TOS-Interface ab Protokollversion 2.0 voraus.",
+      "vergleichsregel": {"typ": "version_mindestens", "grenzwert": "2.0"}
+    },
+    {
+      "requirement_id": "R-04",
+      "thema": "Latenz Fernbedienstand–Kran",
+      "soll": "Zugesicherte Latenz zwischen Fernbedienstand und Kran höchstens 50 ms.",
+      "vergleichsregel": {"typ": "maximum", "grenzwert": 50, "einheit": "ms"}
+    },
+    {
+      "requirement_id": "R-05",
+      "thema": "Betriebstemperatur des Krans",
+      "soll": "Die Spezifikation muss den Betriebstemperaturbereich des Krans angeben; er muss innerhalb −20 °C bis +40 °C liegen (AUE-A100 §2).",
+      "vergleichsregel": {"typ": "bereich_innerhalb", "min": -20, "max": 40, "einheit": "°C"}
+    },
+    {
+      "requirement_id": "R-06",
+      "thema": "Zugangsüberwachung",
+      "soll": "Für den Fernbetrieb ist eine Zugangsüberwachung der Kranbahn mit Personenerkennung (Laserscanner oder gleichwertig) vorzusehen, die den Fernbetrieb bei Personen im Arbeitsbereich sperrt.",
+      "vergleichsregel": {"typ": "fachliche_bewertung"}
+    }
+  ]
+}

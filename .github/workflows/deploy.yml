@@ -1,0 +1,68 @@
+name: Prüfservice deployen
+
+# Jede Änderung auf main (nur per Pull Request, Branch-Schutz) baut das Image, führt die Tests aus
+# und deployt eine neue Revision auf Azure Container Apps. Anmeldung an Azure per OIDC, ohne Secret.
+on:
+  push:
+    branches: [main]
+    paths: [pruefservice/**, training_tools.py, training_data/**, pyproject.toml, uv.lock, Dockerfile, .github/workflows/deploy.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write   # OIDC-Token für die Azure-Anmeldung
+
+concurrency:
+  group: pruefservice-deploy
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: uv run --locked pytest -q
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: azure-training   # nur main; Variablen dort, keine Secrets
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Anmeldung an Azure (OIDC → kuenz-training-github-deploy)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Image bauen und in die Container Registry pushen
+        run: |
+          VERSION=${GITHUB_SHA::7}
+          IMAGE=${{ vars.ACR_NAME }}.azurecr.io/pruefservice:$VERSION
+          az acr login --name ${{ vars.ACR_NAME }}
+          docker build --build-arg APP_VERSION=$VERSION -t $IMAGE .
+          docker push $IMAGE
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Neue Revision deployen
+        run: |
+          az config set extension.use_dynamic_install=yes_without_prompt
+          az containerapp update --name ${{ vars.CONTAINERAPP_NAME }} --resource-group ${{ vars.RESOURCE_GROUP }} \
+            --image $IMAGE --revision-suffix g$VERSION --output none
+          az containerapp revision list --name ${{ vars.CONTAINERAPP_NAME }} --resource-group ${{ vars.RESOURCE_GROUP }} \
+            --query "[?properties.active].{revision:name, image:properties.template.containers[0].image, status:properties.runningState}" -o table
+
+      - name: Rauchtest (Health liefert die neue Version, Agent Card erreichbar)
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS ${{ vars.PUBLIC_URL }}/health | grep -q "\"$VERSION\""; then break; fi
+            sleep 10
+          done
+          curl -fsS ${{ vars.PUBLIC_URL }}/health
+          curl -fsS -o /dev/null ${{ vars.PUBLIC_URL }}/.well-known/agent-card.json
+          echo "Deployt: $VERSION → ${{ vars.PUBLIC_URL }}/a2a" >> $GITHUB_STEP_SUMMARY

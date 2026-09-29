@@ -1,0 +1,68 @@
+{
+  "hinweis": "SYNTHETISCH – Prüfaufträge für das Künz-Agententraining; identisch mit exercises/daten/pruefauftraege.csv bzw. der Dataverse-Tabelle kt_pruefauftraege.",
+  "pruefauftraege": [
+    {
+      "review_id": "PR-001",
+      "asset_id": "A-100",
+      "document_id": "SPEC-001",
+      "document_version": "1",
+      "catalog_id": "AK-FBS",
+      "catalog_version": "1.0",
+      "verwendung": "Demo D2-02/D2-11 und Zielbild D1-02"
+    },
+    {
+      "review_id": "PR-101",
+      "asset_id": "A-100",
+      "document_id": "SPEC-001",
+      "document_version": "1",
+      "catalog_id": "AK-FBS",
+      "catalog_version": "1.0",
+      "verwendung": "Teilnehmer 1 (Ü12)"
+    },
+    {
+      "review_id": "PR-102",
+      "asset_id": "A-100",
+      "document_id": "SPEC-001",
+      "document_version": "1",
+      "catalog_id": "AK-FBS",
+      "catalog_version": "1.0",
+      "verwendung": "Teilnehmer 2 (Ü12)"
+    },
+    {
+      "review_id": "PR-103",
+      "asset_id": "A-100",
+      "document_id": "SPEC-001",
+      "document_version": "1",
+      "catalog_id": "AK-FBS",
+      "catalog_version": "1.0",
+      "verwendung": "Teilnehmer 3 (Ü12)"
+    },
+    {
+      "review_id": "PR-104",
+      "asset_id": "A-100",
+      "document_id": "SPEC-001",
+      "document_version": "1",
+      "catalog_id": "AK-FBS",
+      "catalog_version": "1.0",
+      "verwendung": "Teilnehmer 4 (Ü12)"
+    },
+    {
+      "review_id": "PR-105",
+      "asset_id": "A-100",
+      "document_id": "SPEC-001",
+      "document_version": "1",
+      "catalog_id": "AK-FBS",
+      "catalog_version": "1.0",
+      "verwendung": "Teilnehmer 5 (Ü12)"
+    },
+    {
+      "review_id": "PR-201",
+      "asset_id": "A-100",
+      "document_id": "SPEC-001",
+      "document_version": "2",
+      "catalog_id": "AK-FBS",
+      "catalog_version": "1.0",
+      "verwendung": "Abschlussfall Ü18 (geänderter Dokumentstand)"
+    }
+  ]
+}

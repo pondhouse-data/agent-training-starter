@@ -28,6 +28,25 @@ def anforderungskatalog_laden(asset_id: str = "A-100") -> dict:
         return json.load(source)
 
 
+def pruefauftrag_laden(review_id: str | None = None, asset_id: str | None = None,
+                       document_id: str | None = None, document_version: str | None = None) -> dict:
+    """Prüfauftrag per review_id laden oder über Anlage/Dokument/Version finden (erster passender Auftrag)."""
+    with (DATA / "pruefauftraege.json").open(encoding="utf-8") as source:
+        auftraege = json.load(source)["pruefauftraege"]
+    if review_id:
+        for auftrag in auftraege:
+            if auftrag["review_id"] == review_id.strip().upper():
+                return auftrag
+        raise ValueError(f"Prüfauftrag {review_id} unbekannt. Bekannt: {', '.join(a['review_id'] for a in auftraege)}.")
+    treffer = [a for a in auftraege
+               if (asset_id is None or a["asset_id"] == asset_id)
+               and (document_id is None or a["document_id"] == document_id)
+               and (document_version is None or a["document_version"] == str(document_version))]
+    if not treffer:
+        raise ValueError("Kein Prüfauftrag für diese Anlage/Dokument/Version. Bitte review_id angeben (z. B. PR-001).")
+    return treffer[0]
+
+
 @tool(approval_mode="never_require")
 def lade_spezifikation(document_version: Annotated[str, Field(description="SPEC-001 Version 1 oder 2")] = "1") -> dict:
     """Lade die synthetische Spezifikation SPEC-001 mit Fundstellen."""

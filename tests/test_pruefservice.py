@@ -32,7 +32,8 @@ def send(client, text, key="test-key"):
     return client.post("/a2a", json=body, headers={"X-Api-Key": key} if key else {})
 
 
-@pytest.mark.parametrize("path", ["/.well-known/agent-card.json", "/.well-known/agent.json"])
+@pytest.mark.parametrize("path", ["/.well-known/agent-card.json", "/.well-known/agent.json",
+                                  "/a2a/.well-known/agent-card.json", "/a2a/.well-known/agent.json"])
 def test_agent_card_is_public_and_points_to_a2a_endpoint(client, path):
     card = client.get(path).json()
     assert card["name"] == "Künz Prüfspezialist"

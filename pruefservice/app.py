@@ -166,7 +166,7 @@ def configure_telemetry() -> None:
 
 def agent_card(public_url: str) -> AgentCard:
     return AgentCard(
-        name="Künz Prüfspezialist",
+        name="Kuenz-Pruefspezialist",  # Copilot Studio: nur [a-zA-Z0-9-.], keine Umlaute/Leerzeichen
         description=("Prüft synthetische Kundenspezifikationen (z. B. SPEC-001 v1/v2 für Anlage A-100) gegen den "
                      "internen Anforderungskatalog AK-FBS und liefert je Anforderung einen Befund "
                      "(erfüllt, abweichend, unklar) mit Fundstelle sowie die Klärungspunkte. "

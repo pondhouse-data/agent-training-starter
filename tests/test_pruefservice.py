@@ -40,6 +40,11 @@ def test_agent_card_is_public_and_points_to_a2a_endpoint(client, path):
     assert card["url"] == "https://pruefservice.example/a2a"
 
 
+def test_agent_card_allows_browser_cors(client):
+    response = client.get("/a2a/.well-known/agent-card.json", headers={"Origin": "https://copilotstudio.microsoft.com"})
+    assert response.headers["access-control-allow-origin"] == "*"
+
+
 def test_health(client):
     assert client.get("/health").json()["status"] == "ok"
 

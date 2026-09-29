@@ -174,7 +174,7 @@ def agent_card(public_url: str) -> AgentCard:
         version=VERSION,
         default_input_modes=["text"],
         default_output_modes=["text"],
-        capabilities=AgentCapabilities(streaming=False),
+        capabilities=AgentCapabilities(streaming=True),  # wie das Copilot-Studio-Sample; message/stream liefert das Ergebnis als SSE-Events
         supported_interfaces=[
             AgentInterface(url=f"{public_url}{A2A_PATH}", protocol_binding="JSONRPC", protocol_version="0.3"),
             AgentInterface(url=f"{public_url}{A2A_PATH}", protocol_binding="HTTP+JSON", protocol_version="0.3"),

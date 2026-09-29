@@ -39,7 +39,9 @@ tracer = trace.get_tracer("pruefservice")
 VERSION = os.getenv("APP_VERSION", "lokal")
 A2A_PATH = "/a2a"
 API_KEY_HEADER = "X-Api-Key"
-PUBLIC_PATHS = {"/", "/health", "/.well-known/agent-card.json", "/.well-known/agent.json"}
+CARD_PATHS = ["/.well-known/agent-card.json", "/.well-known/agent.json"]
+# Copilot Studio sucht die Agent Card zuerst relativ zum Endpunkt (…/a2a/.well-known/…), dann am Stamm.
+PUBLIC_PATHS = {"/", "/health", *CARD_PATHS, *(A2A_PATH + p for p in CARD_PATHS)}
 
 INSTRUCTIONS = """Du bist der Prüfspezialist von Künz für synthetische Kundenspezifikationen (Training, keine echten Künz-Vorgaben).
 Ablauf für jede Prüfanfrage:
@@ -202,8 +204,8 @@ def build_app(agent=None) -> Starlette:
     routes = [
         Route("/", health),
         Route("/health", health),
-        *create_agent_card_routes(card),
-        *create_agent_card_routes(card, card_url="/.well-known/agent.json"),
+        *(route for path in CARD_PATHS for prefix in ("", A2A_PATH)
+          for route in create_agent_card_routes(card, card_url=prefix + path)),
         *create_jsonrpc_routes(handler, A2A_PATH, enable_v0_3_compat=True),
         *create_rest_routes(handler, enable_v0_3_compat=True, path_prefix=A2A_PATH),
     ]

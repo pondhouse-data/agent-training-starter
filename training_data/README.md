@@ -9,6 +9,7 @@ Material für Strang B (Tag 2 und 3). Der fiktive Kunde ARI (K-001) will Kran A-
 | `SPEC-001_v1.extracted.json`, `…_v2…` | Text je Abschnitt mit stabiler Fundstelle (`abschnitt`) – **erzeugt**, nicht von Hand ändern | MAF-Starter: Tool „Spezifikation laden“; keine PDF-/OCR-Verarbeitung im Training |
 | `AK-FBS_anforderungskatalog.json` | Sechs Anforderungen R-01 bis R-06 mit Vergleichsregel | MAF-Starter: Tool „Anforderungskatalog laden“ (Ü9: A-100 liefert sechs Anforderungen) |
 | `AK-FBS_anforderungskatalog.md` / `dist/*.pdf` | Lesbare Fassung des Katalogs – **erzeugt** | Theorie D2-12, Übungsheft |
+| `pruefauftraege.json` | Prüfaufträge PR-001, PR-101…105, PR-201 (review_id → Anlage, Dokument, Version) | Prüfservice-Tool „Prüfauftrag laden“ (Ü13/Ü14) |
 | `referenzbefunde.json` | Erwartete Befunde je Dokumentversion inklusive Fundstellen und Klärungspunkten | CI-Referenztests (Ü11), Kontrolle in Ü10, Ü12, Ü16, Ü18 |
 | `build.py` | Erzeugt die JSON- und MD-Dateien, prüft die Referenzbefunde gegen Katalog und Originaltext; `--dist` erzeugt die PDFs (Lastenheft im ARI-Layout, Katalog im Künz-Layout, siehe `../layout/`) | nach jeder Änderung ausführen |
 

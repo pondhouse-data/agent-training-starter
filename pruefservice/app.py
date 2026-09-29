@@ -39,7 +39,7 @@ tracer = trace.get_tracer("pruefservice")
 VERSION = os.getenv("APP_VERSION", "lokal")
 A2A_PATH = "/a2a"
 API_KEY_HEADER = "X-Api-Key"
-PUBLIC_PATHS = {"/health", "/.well-known/agent-card.json", "/.well-known/agent.json"}
+PUBLIC_PATHS = {"/", "/health", "/.well-known/agent-card.json", "/.well-known/agent.json"}
 
 INSTRUCTIONS = """Du bist der Prüfspezialist von Künz für synthetische Kundenspezifikationen (Training, keine echten Künz-Vorgaben).
 Ablauf für jede Prüfanfrage:
@@ -148,6 +148,8 @@ def credential():
 
 def configure_telemetry() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s", force=True)
+    for noisy in ("azure", "httpx", "httpx2", "azure.monitor.opentelemetry.exporter"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)  # HTTP-Details des SDK verdecken sonst die Anfragen
     connection_string = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
     if not connection_string:
         return
@@ -198,6 +200,7 @@ def build_app(agent=None) -> Starlette:
         return JSONResponse({"status": "ok", "version": VERSION})
 
     routes = [
+        Route("/", health),
         Route("/health", health),
         *create_agent_card_routes(card),
         *create_agent_card_routes(card, card_url="/.well-known/agent.json"),

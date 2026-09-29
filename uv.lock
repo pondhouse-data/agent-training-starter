@@ -21,6 +21,12 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/0b/91/087e4281bae91e19c4bb0736dc0807725e2e1f641dcc1ac86e625137c32c/a2a_sdk-1.1.5-py3-none-any.whl", hash = "sha256:c1d63d36b79a097c62dd9be001fce21d5939f5a811a9c5afd0ba8082f13f68bf", size = 255110, upload-time = "2026-09-21T09:52:24.741Z" },
 ]
 
+[package.optional-dependencies]
+http-server = [
+    { name = "sse-starlette" },
+    { name = "starlette" },
+]
+
 [[package]]
 name = "ag-ui-protocol"
 version = "0.1.22"
@@ -511,10 +517,14 @@ name = "agent-training-starter"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "a2a-sdk", extra = ["http-server"] },
     { name = "agent-framework" },
+    { name = "agent-framework-a2a" },
     { name = "agent-framework-foundry" },
     { name = "azure-identity" },
+    { name = "azure-monitor-opentelemetry-exporter" },
     { name = "python-dotenv" },
+    { name = "uvicorn" },
 ]
 
 [package.dev-dependencies]
@@ -524,10 +534,14 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "a2a-sdk", extras = ["http-server"], specifier = "==1.1.5" },
     { name = "agent-framework", specifier = "==1.19.0" },
+    { name = "agent-framework-a2a", specifier = "==1.0.0b260918" },
     { name = "agent-framework-foundry", specifier = "==1.13.1" },
     { name = "azure-identity", specifier = "==1.25.1" },
+    { name = "azure-monitor-opentelemetry-exporter", specifier = "==1.0.0b57" },
     { name = "python-dotenv", specifier = "==1.1.1" },
+    { name = "uvicorn", specifier = "==0.54.0" },
 ]
 
 [package.metadata.requires-dev]

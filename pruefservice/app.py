@@ -27,6 +27,7 @@ from opentelemetry import trace
 from pydantic import Field
 from starlette.applications import Starlette
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.routing import Route
@@ -214,6 +215,8 @@ def build_app(agent=None) -> Starlette:
         log.warning("A2A_API_KEY nicht gesetzt: Endpunkt ist OHNE Authentifizierung erreichbar (nur lokal verwenden).")
     app = Starlette(routes=routes)
     app.add_middleware(ApiKeyMiddleware, api_key=api_key)
+    # Copilot Studio liest die Agent Card direkt aus dem Browser (copilotstudio.microsoft.com) → CORS nur für GET.
+    app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=[])
     log.info("Prüfservice %s bereit: Agent Card %s/.well-known/agent-card.json, A2A-Endpunkt %s%s",
              VERSION, public_url, public_url, A2A_PATH)
     return app

@@ -17,7 +17,8 @@ from a2a.helpers import new_task_from_user_message
 from a2a.server.agent_execution import RequestContext
 from a2a.server.events import EventQueue
 from a2a.server.request_handlers import DefaultRequestHandler
-from a2a.server.routes import create_agent_card_routes, create_jsonrpc_routes, create_rest_routes
+from a2a.compat.v0_3.conversions import to_compat_agent_card
+from a2a.server.routes import create_jsonrpc_routes, create_rest_routes
 from a2a.server.tasks import InMemoryTaskStore, TaskUpdater
 from a2a.types import AgentCapabilities, AgentCard, AgentInterface, AgentSkill, Part
 from agent_framework import Agent, tool
@@ -199,14 +200,20 @@ def build_app(agent=None) -> Starlette:
     handler = DefaultRequestHandler(agent_executor=PruefserviceExecutor(agent or build_agent()),
                                     task_store=InMemoryTaskStore(), agent_card=card)
 
+    # Copilot Studio akzeptiert (Stand 29.09.2026) nur v0.3-Agent-Cards; Felder aus v1.0 wie supportedInterfaces
+    # führen zu „uses A2A protocol v1, which is not supported yet“. Deshalb die reine v0.3-Fassung ausliefern.
+    card_v03 = to_compat_agent_card(card).model_dump(by_alias=True, exclude_none=True)
+
+    async def agent_card_v03(_: Request) -> JSONResponse:
+        return JSONResponse(card_v03)
+
     async def health(_: Request) -> JSONResponse:
         return JSONResponse({"status": "ok", "version": VERSION})
 
     routes = [
         Route("/", health),
         Route("/health", health),
-        *(route for path in CARD_PATHS for prefix in ("", A2A_PATH)
-          for route in create_agent_card_routes(card, card_url=prefix + path)),
+        *(Route(prefix + path, agent_card_v03) for path in CARD_PATHS for prefix in ("", A2A_PATH)),
         *create_jsonrpc_routes(handler, A2A_PATH, enable_v0_3_compat=True),
         *create_rest_routes(handler, enable_v0_3_compat=True, path_prefix=A2A_PATH),
     ]

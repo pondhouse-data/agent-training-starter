@@ -36,7 +36,7 @@ def send(client, text, key="test-key"):
                                   "/a2a/.well-known/agent-card.json", "/a2a/.well-known/agent.json"])
 def test_agent_card_is_public_and_points_to_a2a_endpoint(client, path):
     card = client.get(path).json()
-    assert card["name"] == "Künz Prüfspezialist"
+    assert card["name"] == "Kuenz-Pruefspezialist"
     assert card["url"] == "https://pruefservice.example/a2a"
     assert card["protocolVersion"] == "0.3"
     assert "supportedInterfaces" not in card  # Copilot Studio lehnt v1-Cards ab

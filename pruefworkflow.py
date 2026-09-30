@@ -15,6 +15,7 @@ from typing import Literal, Never
 
 from agent_framework import (
     Agent,
+    BaseChatClient,
     Executor,
     FileCheckpointStorage,
     Workflow,
@@ -23,6 +24,7 @@ from agent_framework import (
     handler,
     response_handler,
 )
+from opentelemetry import trace
 
 from pruefung import Extraktion, referenz_extraktion_laden, vergleiche
 from training_tools import anforderungskatalog_laden, pruefauftrag_laden, spezifikation_laden
@@ -97,6 +99,7 @@ class AuftragLaden(Executor):
     @handler
     async def laden(self, review_id: str, ctx: WorkflowContext[Pruefkontext]) -> None:
         auftrag = pruefauftrag_laden(review_id)
+        trace.get_current_span().set_attribute("kuenz.review_id", auftrag["review_id"])  # im Trace auffindbar (Ü17)
         await ctx.send_message(Pruefkontext(
             review_id=auftrag["review_id"], asset_id=auftrag["asset_id"], document_id=auftrag["document_id"],
             document_version=auftrag["document_version"], catalog_id=auftrag["catalog_id"],
@@ -123,11 +126,16 @@ Regeln:
 
 
 class AngabenExtrahieren(Executor):
-    """Einziger LLM-Schritt. Im Modus `referenz` wird die geprüfte Referenz-Extraktion geladen."""
+    """Einziger LLM-Schritt. Im Modus `referenz` wird die geprüfte Referenz-Extraktion geladen.
 
-    def __init__(self, modus: ExtraktionsModus = "modell") -> None:
+    Ohne `client` meldet sich der Schritt lokal per Azure CLI an; der Prüfservice übergibt seinen
+    Client mit Managed Identity.
+    """
+
+    def __init__(self, modus: ExtraktionsModus = "modell", client: BaseChatClient | None = None) -> None:
         super().__init__(id="angaben_extrahieren")
         self.modus = modus
+        self.client = client
 
     async def _modell_extraktion(self, kontext: Pruefkontext) -> Extraktion:
         from agent_framework.foundry import FoundryChatClient
@@ -146,14 +154,20 @@ class AngabenExtrahieren(Executor):
         prompt = (f"Anforderungen ({katalog['catalog_id']} {katalog['version']}):\n{anforderungen}\n\n"
                   f"Spezifikation {dokument['document_id']} Version {dokument['document_version']}:\n{text}")
 
-        async with AzureCliCredential() as credential:
-            client = FoundryChatClient(project_endpoint=endpoint, model=model, credential=credential)
-            agent = Agent(client=client, id="angaben-extraktion", name="AngabenExtraktion",
-                          instructions=EXTRAKTION_ANWEISUNG)
-            response = await agent.run(prompt, options={"response_format": Extraktion, "reasoning": {"effort": os.getenv("EXTRAKTION_REASONING", "medium")}})
+        options = {"response_format": Extraktion, "reasoning": {"effort": os.getenv("EXTRAKTION_REASONING", "medium")}}
+        if self.client is not None:
+            response = await self._agent(self.client).run(prompt, options=options)
+        else:
+            async with AzureCliCredential() as credential:
+                client = FoundryChatClient(project_endpoint=endpoint, model=model, credential=credential)
+                response = await self._agent(client).run(prompt, options=options)
         if response.value is None:
             raise RuntimeError(f"Modell lieferte keine gültige strukturierte Ausgabe: {response.text[:300]}")
         return response.value
+
+    @staticmethod
+    def _agent(client) -> Agent:
+        return Agent(client=client, id="angaben-extraktion", name="AngabenExtraktion", instructions=EXTRAKTION_ANWEISUNG)
 
     @handler
     async def extrahieren(self, kontext: Pruefkontext, ctx: WorkflowContext[ExtraktionErgebnis]) -> None:

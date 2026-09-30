@@ -1,4 +1,4 @@
-# Prüfservice (A2A) für Azure Container Apps. Baut aus dem Repository-Stamm:
+# Prüfservice (A2A/REST, Prüfworkflow aus Tag 2) für Azure Container Apps. Baut aus dem Repository-Stamm:
 #   docker build -t pruefservice .
 FROM python:3.12-slim
 
@@ -9,8 +9,9 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-dev --no-install-project
 
-COPY training_tools.py ./
+COPY training_tools.py pruefung.py pruefworkflow.py ./
 COPY training_data ./training_data
+COPY referenz ./referenz
 COPY pruefservice ./pruefservice
 
 ARG APP_VERSION=lokal

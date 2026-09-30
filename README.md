@@ -5,8 +5,38 @@
 **Start:** [SETUP.md](SETUP.md) von oben nach unten ausführen; Codespace ist der Standard. Nach `az login --use-device-code` und `.env`-Konfiguration: `uv run python agent.py`. Ohne Azure-Zugang funktionieren `uv run pytest` und die lokalen Ladefunktionen bereits.
 
 - `training_tools.py`: Spezifikation und Katalog laden (A-100; A-200/A-999 ergeben verständliche Fehler).
-- `agent.py`: MAF-Agent und Foundry-Modell mit `AzureCliCredential`. In Ü8 die Instruktion ändern, in Ü9 die Toolfunktion reviewen.
-- `tests/`: lokale Tests sind grün; Referenzbefunde R-01/R-03/R-05 für Ü10/11 sind **absichtlich übersprungen**, bis der Prüfworkflow existiert. Ein grüner PR-Check beweist derzeit nur die Starter-Basis, noch nicht die fachliche Prüfung!
+- `agent.py`: MAF-Agent und Foundry-Modell mit `AzureCliCredential`; zeigt jeden Toolaufruf in der Konsole. Eigene Frage: `uv run python agent.py "Welche Regel gilt für R-03?"`; OpenTelemetry-Spans zusätzlich mit `ENABLE_CONSOLE_EXPORTERS=true`.
+- `pruefung.py`, `pruefworkflow.py`, `pruefen.py`: der Prüfworkflow für SPEC-001 (Tag 2, siehe unten).
+- `tests/`: lokale Tests sind grün. Übungstests (Marker `exercise`) sind **absichtlich übersprungen**, bis die Übung umgesetzt ist. Ein grüner PR-Check beweist erst nach Ü11 die fachliche Prüfung.
+
+## Tag 2: Prüfworkflow SPEC-001
+
+```
+Auftrag laden → Angaben extrahieren (LLM, strukturierte Ausgabe) → vergleichen (Python) → Prüfer je Befund → Bericht
+```
+
+- **Extraktion** (`pruefworkflow.py`): Das Modell liefert je Anforderung nur Fundstellen (Abschnitt, wörtliches Zitat, Werte) als Pydantic-Schema `Extraktion`. Es bewertet nichts (Ausnahme R-06 als Vorschlag).
+- **Vergleich** (`pruefung.py`): normale Funktionen. Zitat nicht im Originaltext der geprüften Version → `unklar`. Keine Angabe → `unklar`, nie `erfüllt`. Widersprüchliche Werte → `unklar` mit allen Fundstellen. Dann die Regel aus dem Katalog (Teilmenge, Maximum, Version, Bereich).
+- **Prüfer** (`request_info`): eine Frage je Befund. Der Workflow wartet mit Checkpoint in `.checkpoints/<review_id>/`, auch über einen Prozessneustart. KI-Befund und Prüferentscheidung stehen getrennt im Bericht `berichte/<review_id>.md/.json`.
+- `referenz/`: geprüfte Referenz-Extraktion. `--extraktion referenz` läuft ohne Azure; die Referenztests nutzen sie, damit der PR-Check deterministisch bleibt.
+
+```bash
+uv run python pruefen.py start PR-101          # bis zum Prüferschritt; Prozess endet
+uv run python pruefen.py status PR-101         # Checkpoint-Kette, offene Prüferfragen
+uv run python pruefen.py fortsetzen PR-101     # neu laden, je Befund bestätigen oder korrigieren
+uv run python pruefen.py bericht PR-101
+uv run python pruefung.py 1                    # nur Regeln auf die Referenz-Extraktion (v1 oder 2)
+```
+
+| Übung | Aufgabe | Test freischalten |
+|---|---|---|
+| Ü8 | `.env`, `uv run python agent.py`, Instruktion ändern | – |
+| Ü9 | `anforderungskatalog_laden` um `requirement_id` erweitern (R-03 → eine Anforderung, R-99 → klare Fehlermeldung) | `tests/test_uebung09.py` |
+| Ü10 | `version_mindestens` in `pruefung.py` implementieren; danach R-03 v1 `abweichend`, v2 `erfüllt` | `tests/test_versionen.py` |
+| Ü11 | Referenztests als PR-Gate: Skip-Zeilen löschen, PR öffnen | `tests/test_referenzbefunde.py` |
+| Ü12 | Prüfung starten, Prozess beenden, fortsetzen, einen Befund bestätigen und einen korrigieren | – |
+
+Die Extraktion schwankt zwischen Läufen. Die Prüfregeln sind deterministisch getestet, die Extraktion wird bewertet (Tag 3, Ü17). `EXTRAKTION_REASONING` (Standard `medium`) steuert den Denkaufwand des Modells; `low` ist schneller, verwechselt aber häufiger Raum- und Kranangaben.
 
 ## Prüfservice (Tag 3)
 
@@ -29,4 +59,4 @@ Wenn Studios ausgehende A2A-Ausführung mit `SystemError` scheitert, denselben D
 
 **Zurück zu A2A:** In Studio REST-Tools deaktivieren (nicht löschen), den korrekt authentifizierten A2A-Agenten aktivieren, Dispatcher-Instruktionen auf A2A umstellen und Prüfauftrag, Status-/ID-Übergabe sowie Teams/Freigabe erneut testen. Beide Routen bleiben im Image; keine Rücknahme der Deployment-Revision, kein Key-/Rollenwechsel nötig. Nie beide Prüfrouten gleichzeitig automatisch auswählen lassen. Bei erneutem A2A-Fehler umgekehrt auf REST zurückschalten.
 
-**TODO Übungen:** Ü10 Graph-Workflow, deterministische Vergleiche (insbesondere R-03), strukturierte Befunde und verifizierte Fundstellen; Ü11 Referenztests aktivieren und roten/grünen Lauf zeigen; Ü12 Checkpoints und Prüferentscheidung; Tag 3 A2A/Deployment. Trainerstände liegen **privat** in `pondhouse-data/agent-training-solutions`, nicht hier. Der CD-Workflow `deploy.yml` deployt den Prüfservice nach jedem Merge (siehe oben). Branche im Repo anlegen, **kein Fork** (Fork-PRs erhalten kein OIDC). `main` erfordert PR und `referenztests`.
+**Übungen:** Tag 2 siehe oben; Tag 3 A2A/Deployment. Der Prüfservice nutzt den Prüfworkflow noch nicht. Trainerstände liegen **privat** in `pondhouse-data/agent-training-solutions`, nicht hier. Der CD-Workflow `deploy.yml` deployt den Prüfservice nach jedem Merge (siehe oben). Branche im Repo anlegen, **kein Fork** (Fork-PRs erhalten kein OIDC). `main` erfordert PR und `referenztests`.

@@ -1,0 +1,87 @@
+{
+  "hinweis": "SYNTHETISCH – geprüfte Referenz-Extraktion (was ein korrektes Modell liefern soll). Grundlage für Referenztests und --extraktion referenz; nicht von Hand an Testergebnisse anpassen.",
+  "document_id": "SPEC-001",
+  "document_version": "1",
+  "angaben": [
+    {
+      "requirement_id": "R-01",
+      "fundstellen": [
+        {
+          "abschnitt": "2.1",
+          "zitat": "in deutscher und englischer Sprache",
+          "bezug": "Dokumentation",
+          "werte": [
+            "DE",
+            "EN"
+          ]
+        }
+      ],
+      "bewertung_vorschlag": null,
+      "begruendung": "§2.1 verlangt Dokumentation in Deutsch und Englisch."
+    },
+    {
+      "requirement_id": "R-02",
+      "fundstellen": [
+        {
+          "abschnitt": "2.3",
+          "zitat": "von 41 t bleibt unverändert",
+          "bezug": "Kran A-100 (Spreader)",
+          "werte": [
+            "41"
+          ]
+        }
+      ],
+      "bewertung_vorschlag": null,
+      "begruendung": "§2.3 nennt die Tragfähigkeit unter Spreader. §2.5 betrifft den Aufstellboden, nicht den Kran."
+    },
+    {
+      "requirement_id": "R-03",
+      "fundstellen": [
+        {
+          "abschnitt": "3.2",
+          "zitat": "in Protokollversion 1.4 bleibt unverändert",
+          "bezug": "TOS-Anbindung von A-100",
+          "werte": [
+            "1.4"
+          ]
+        }
+      ],
+      "bewertung_vorschlag": null,
+      "begruendung": "§3.2 nennt die Protokollversion des Künz TOS-Interface. §4.6 (OPC UA 1.04) betrifft den Leitstand, nicht das TOS."
+    },
+    {
+      "requirement_id": "R-04",
+      "fundstellen": [
+        {
+          "abschnitt": "4.1",
+          "zitat": "Die Latenz beträgt höchstens 30 ms.",
+          "bezug": "Verbindung Fernbedienstand–Kran",
+          "werte": [
+            "30"
+          ]
+        }
+      ],
+      "bewertung_vorschlag": null,
+      "begruendung": "§4.1 sichert die Latenz Fernbedienstand–Kran zu. §4.5 betrifft nur die Videoaufzeichnung."
+    },
+    {
+      "requirement_id": "R-05",
+      "fundstellen": [],
+      "bewertung_vorschlag": null,
+      "begruendung": "Keine Angabe zur Betriebstemperatur des Krans; §6.1 und §6.3 betreffen nur Innenräume und Pult."
+    },
+    {
+      "requirement_id": "R-06",
+      "fundstellen": [
+        {
+          "abschnitt": "5.2",
+          "zitat": "mit Laserscannern überwacht",
+          "bezug": "Zugänge zur Kranbahn",
+          "werte": []
+        }
+      ],
+      "bewertung_vorschlag": "erfüllt",
+      "begruendung": "Laserscanner an den Zugängen, Fernbetrieb bei Personen im Arbeitsbereich gesperrt."
+    }
+  ]
+}

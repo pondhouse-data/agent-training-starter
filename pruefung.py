@@ -50,8 +50,7 @@ def version_mindestens(ist: str, soll: str) -> bool:
         return tuple(int(teil) for teil in teile)
 
     aktuell, minimum = segmente(ist), segmente(soll)
-    laenge = max(len(aktuell), len(minimum))
-    return aktuell + (0,) * (laenge - len(aktuell)) >= minimum + (0,) * (laenge - len(minimum))
+    return aktuell[0] > minimum[0]
 
 
 def _zahl(wert: str) -> float:

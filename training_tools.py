@@ -18,14 +18,21 @@ def spezifikation_laden(document_version: str = "1") -> dict:
         return json.load(source)
 
 
-def anforderungskatalog_laden(asset_id: str = "A-100") -> dict:
-    """Katalog für A-100 laden; andere Anlagen ausdrücklich zurückweisen."""
+def anforderungskatalog_laden(asset_id: str = "A-100", requirement_id: str | None = None) -> dict:
+    """Katalog für A-100 laden, optional nur eine Anforderung; Unbekanntes ausdrücklich zurückweisen."""
     if asset_id != "A-100":
         if asset_id == "A-200":
             raise ValueError("Für A-200 gibt es keinen Nachrüst-Katalog: Der Fernbedienstand ist bereits vorhanden.")
         raise ValueError(f"Anlage {asset_id} unbekannt oder ohne Katalog. Bitte Anlagen-ID prüfen (A-100).")
     with (DATA / "AK-FBS_anforderungskatalog.json").open(encoding="utf-8") as source:
-        return json.load(source)
+        katalog = json.load(source)
+    if requirement_id is None:
+        return katalog
+    treffer = [r for r in katalog["requirements"] if r["requirement_id"] == requirement_id]
+    if not treffer:
+        bekannt = ", ".join(r["requirement_id"] for r in katalog["requirements"])
+        raise ValueError(f"Anforderung {requirement_id} gibt es im Katalog {katalog['catalog_id']} nicht. Bekannt: {bekannt}.")
+    return {**katalog, "requirements": treffer}
 
 
 def pruefauftrag_laden(review_id: str | None = None, asset_id: str | None = None,
@@ -54,6 +61,9 @@ def lade_spezifikation(document_version: Annotated[str, Field(description="SPEC-
 
 
 @tool(approval_mode="never_require")
-def lade_anforderungskatalog(asset_id: Annotated[str, Field(description="Anlagen-ID, zum Beispiel A-100")]) -> dict:
-    """Lade den internen Anforderungskatalog für eine Anlage."""
-    return anforderungskatalog_laden(asset_id)
+def lade_anforderungskatalog(
+    asset_id: Annotated[str, Field(description="Anlagen-ID, zum Beispiel A-100")],
+    requirement_id: Annotated[str | None, Field(description="Optional eine Anforderung, z. B. R-03")] = None,
+) -> dict:
+    """Lade den internen Anforderungskatalog für eine Anlage, optional nur eine Anforderung."""
+    return anforderungskatalog_laden(asset_id, requirement_id)

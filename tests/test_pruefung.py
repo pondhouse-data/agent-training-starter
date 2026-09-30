@@ -113,3 +113,11 @@ def test_workflow_pausiert_und_wird_in_neuer_instanz_fortgesetzt(tmp_path):
     assert r06["pruefer_entscheidung"]["entscheidung"] == "korrigiert"
     assert r06["endgueltiger_status"] == "unklar"
     assert "R-06" in bericht["klaerungspunkte"]
+
+
+def test_abschnitt_mit_paragraphzeichen_wird_akzeptiert():
+    extraktion = extraktion_mit("1", "R-02", Fundstelle(abschnitt="§ 2.3", zitat="von 41 t bleibt unverändert",
+                                                        bezug="Kran A-100", werte=["41"]))
+    r02 = befund(vergleiche(extraktion, "1"), "R-02")
+    assert r02["status"] == "erfüllt"
+    assert r02["fundstellen"][0]["abschnitt"] == "2.3"

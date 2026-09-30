@@ -6,12 +6,15 @@
     uv run python pruefen.py bericht PR-101               # abgeschlossenen Bericht anzeigen
 
 `--extraktion referenz` nutzt die geprüfte Referenz-Extraktion statt des Modells (ohne Azure).
+Tracing (D3-13): `ENABLE_CONSOLE_EXPORTERS=true` gibt die Spans in der Konsole aus;
+`OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` schickt sie z. B. an ein lokales Aspire Dashboard.
 """
 
 import argparse
 import asyncio
 import getpass
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -190,6 +193,12 @@ def bericht(args) -> None:
     print(pfad.read_text(encoding="utf-8"))
 
 
+def tracing_einschalten() -> None:
+    if os.getenv("ENABLE_CONSOLE_EXPORTERS", "").lower() == "true" or os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"):
+        from agent_framework.observability import configure_otel_providers
+        configure_otel_providers(service_name="pruefworkflow-lokal")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Prüfworkflow SPEC-001 (MAF)")
     sub = parser.add_subparsers(dest="befehl", required=True)
@@ -212,6 +221,7 @@ def main() -> None:
     sub.add_parser("bericht", help="Bericht anzeigen").add_argument("review_id")
 
     args = parser.parse_args()
+    tracing_einschalten()
     if args.befehl == "bericht":
         bericht(args)
     else:

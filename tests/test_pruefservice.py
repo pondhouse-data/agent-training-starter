@@ -1,20 +1,20 @@
-"""Prüfservice ohne Modellaufruf testen: Agent Card, API-Key, Prüfauftrag-Tool, A2A-Ablauf mit Attrappe."""
+"""Prüfservice ohne Modellaufruf testen: Agent Card, API-Key, Auftragserkennung, A2A/REST mit dem echten
+Workflow und der geprüften Referenz-Extraktion statt des Modells."""
 
 import pytest
-from agent_framework import AgentResponse, Message
 from starlette.testclient import TestClient
 
+from pruefservice.workflow import review_id_bestimmen, workflow_pruefen
 from training_tools import pruefauftrag_laden
 
 
-class FakeAgent:
-    """Ersetzt den Foundry-Agenten; antwortet deterministisch."""
+async def referenz_pruefen(review_id):
+    return await workflow_pruefen(review_id, "referenz")
 
-    def create_session(self, session_id=None):
-        return None
 
-    async def run(self, query, session=None, **_):
-        return AgentResponse(messages=[Message(role="assistant", contents=[f"Echo: {query}"])])
+def befund(text, requirement_id):
+    zeile = next(z for z in text.splitlines() if z.startswith(f"| {requirement_id} |"))
+    return zeile.split(" | ")[1]
 
 
 @pytest.fixture
@@ -22,7 +22,7 @@ def client(monkeypatch):
     monkeypatch.setenv("A2A_API_KEY", "test-key")
     monkeypatch.setenv("PUBLIC_URL", "https://pruefservice.example")
     from pruefservice.app import build_app
-    return TestClient(build_app(agent=FakeAgent()))
+    return TestClient(build_app(pruefen=referenz_pruefen))
 
 
 def send(client, text, key="test-key"):
@@ -59,8 +59,34 @@ def test_a2a_requires_api_key(client, key):
 def test_a2a_round_trip_returns_artifact_and_status_message(client):
     result = send(client, "Prüfe PR-001").json()["result"]
     assert result["status"]["state"] == "completed"
-    assert result["artifacts"][0]["parts"][0]["text"] == "Echo: Prüfe PR-001"
-    assert result["status"]["message"]["parts"][0]["text"] == "Echo: Prüfe PR-001"
+    text = result["artifacts"][0]["parts"][0]["text"]
+    assert result["status"]["message"]["parts"][0]["text"] == text
+    assert text.startswith("Prüfauftrag PR-001 · SPEC-001 v1 · Katalog AK-FBS 1.0 · Anlage A-100\n")
+    assert [befund(text, r) for r in ("R-01", "R-02", "R-04", "R-05")] == ["erfüllt", "erfüllt", "erfüllt", "unklar"]
+    # R-03 ist vor Ü10 „unklar“ (Vergleichsregel fehlt), danach „abweichend“ – Klärungspunkt bleibt es in beiden Fällen.
+    assert befund(text, "R-03") in {"unklar", "abweichend"}
+    assert "\nKlärungspunkte: R-03, R-05\n" in text
+    assert "die fachliche Entscheidung trifft der Prüfer" in text
+
+
+def test_a2a_asks_back_instead_of_guessing(client):
+    result = send(client, "Prüfe das bitte").json()["result"]
+    assert result["status"]["state"] == "input-required"
+    assert "review_id" in result["status"]["message"]["parts"][0]["text"]
+
+
+@pytest.mark.parametrize("text,review_id", [("Prüfe PR-101", "PR-101"), ("bitte pr-201 prüfen", "PR-201"),
+                                            ("Prüfe SPEC-001 v2 für A-100", "PR-201"),
+                                            ("Prüfe SPEC-001 Version 1 für A-100", "PR-001")])
+def test_review_id_from_request(text, review_id):
+    assert review_id_bestimmen(text) == review_id
+
+
+@pytest.mark.parametrize("text,meldung", [("Prüfe das bitte", "review_id"), ("Prüfe PR-001 und PR-101", "Mehrere"),
+                                          ("Prüfe PR-999", "unbekannt"), ("Prüfe SPEC-001 für A-100", "review_id")])
+def test_unclear_request_raises_question(text, meldung):
+    with pytest.raises(ValueError, match=meldung):
+        review_id_bestimmen(text)
 
 
 def test_review_order_by_id_and_by_document():
@@ -70,7 +96,7 @@ def test_review_order_by_id_and_by_document():
         pruefauftrag_laden("PR-999")
 
 
-def test_rest_review_reuses_agent_and_exposes_task_status(client):
+def test_rest_review_runs_workflow_and_exposes_task_status(client):
     response = client.post("/pruefung", json={"review_id": "pr-001", "context_id": "rest-test"},
                            headers={"X-Api-Key": "test-key"})
     assert response.status_code == 200
@@ -78,7 +104,8 @@ def test_rest_review_reuses_agent_and_exposes_task_status(client):
     assert result["review_id"] == "PR-001"
     assert result["context_id"] == "rest-test"
     assert result["status"] == "completed"
-    assert result["antwort"] == "Echo: Prüfe den Prüfauftrag PR-001."
+    assert result["antwort"].startswith("Prüfauftrag PR-001 · SPEC-001 v1")
+    assert "Extraktion referenz" in result["antwort"]
     assert result["task_id"]
     assert result["version"]
     status = client.get(f'/pruefung/{result["task_id"]}', headers={"X-Api-Key": "test-key"})
@@ -97,7 +124,7 @@ def test_rest_requires_same_api_key(client, key, method, path, body):
 @pytest.mark.parametrize("body", [{}, [], {"review_id": None}, {"review_id": 1},
                                   {"review_id": ""}, {"review_id": "PR-001", "unexpected": "x"},
                                   {"review_id": "PR-001", "context_id": ""}])
-def test_rest_validates_input_before_calling_agent(client, body):
+def test_rest_validates_input_before_running_workflow(client, body):
     assert client.post("/pruefung", json=body, headers={"X-Api-Key": "test-key"}).status_code == 400
 
 
@@ -112,13 +139,12 @@ def test_rest_unknown_review_and_task(client):
 
 
 def test_rest_model_failure_is_not_a_success(monkeypatch):
-    class BrokenAgent(FakeAgent):
-        async def run(self, *_, **__):
-            raise RuntimeError("private-model-details")
+    async def kaputt(_):
+        raise RuntimeError("private-model-details")
 
     monkeypatch.setenv("A2A_API_KEY", "test-key")
     from pruefservice.app import build_app
-    with TestClient(build_app(agent=BrokenAgent())) as client:
+    with TestClient(build_app(pruefen=kaputt)) as client:
         response = client.post("/pruefung", json={"review_id": "PR-001"}, headers={"X-Api-Key": "test-key"})
         assert response.status_code == 502
         result = response.json()
@@ -140,20 +166,18 @@ def test_openapi_is_public_and_declares_auth_and_operations(client):
     assert schema["paths"]["/pruefung/{task_id}"]["get"]["operationId"] == "PruefstatusAbrufen"
 
 
-def test_rest_status_does_not_run_the_model_again(monkeypatch):
-    class CountingAgent(FakeAgent):
-        calls = 0
+def test_rest_status_does_not_run_the_workflow_again(monkeypatch):
+    aufrufe = []
 
-        async def run(self, query, **kwargs):
-            self.calls += 1
-            return await super().run(query, **kwargs)
+    async def zaehlend(review_id):
+        aufrufe.append(review_id)
+        return await referenz_pruefen(review_id)
 
     monkeypatch.setenv("A2A_API_KEY", "test-key")
     from pruefservice.app import build_app
-    agent = CountingAgent()
-    with TestClient(build_app(agent=agent)) as client:
+    with TestClient(build_app(pruefen=zaehlend)) as client:
         result = client.post("/pruefung", json={"review_id": "PR-001"},
                              headers={"X-Api-Key": "test-key"}).json()
         for _ in range(2):
             assert client.get(f'/pruefung/{result["task_id"]}', headers={"X-Api-Key": "test-key"}).status_code == 200
-        assert agent.calls == 1
+        assert aufrufe == ["PR-001"]

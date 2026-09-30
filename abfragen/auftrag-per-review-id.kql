@@ -1,0 +1,13 @@
+// Ü17: Prüfauftrag per review_id im Trace des Prüfservice finden (Application Insights → Logs)
+let rid = "PR-101";   // eigene review_id aus Ü13 eintragen
+let anfragen = dependencies
+    | where timestamp > ago(1d) and name == "pruefservice.a2a_anfrage"
+    | where tostring(customDimensions["kuenz.review_id"]) == rid
+    | project operation_Id, gestartet = timestamp, gesamt_ms = round(duration),
+              task_id = tostring(customDimensions["a2a.task_id"]), context_id = tostring(customDimensions["a2a.context_id"]);
+dependencies
+| where timestamp > ago(1d) and name startswith "executor.process"
+| join kind=inner anfragen on operation_Id
+| project gestartet, task_id, context_id, gesamt_ms, schritt = tostring(customDimensions["executor.id"]),
+          start = timestamp, dauer_ms = round(duration)
+| order by gestartet desc, start asc

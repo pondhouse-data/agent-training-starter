@@ -148,6 +148,8 @@ def vergleiche(extraktion: Extraktion, document_version: str) -> list[dict]:
         angabe = angaben.get(rid)
         belegt, verworfen = [], []
         for fundstelle in angabe.fundstellen if angabe else []:
+            # Das Modell schreibt die Abschnittsnummer manchmal als „§2.1“ (so steht sie im Prompt).
+            fundstelle = fundstelle.model_copy(update={"abschnitt": fundstelle.abschnitt.strip().lstrip("§").strip()})
             text = abschnitte.get(fundstelle.abschnitt)
             if text is not None and fundstelle.zitat.strip() and _normalisiert(fundstelle.zitat) in _normalisiert(text):
                 belegt.append(fundstelle)

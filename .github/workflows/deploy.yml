@@ -5,7 +5,8 @@ name: Prüfservice deployen
 on:
   push:
     branches: [main]
-    paths: [pruefservice/**, training_tools.py, training_data/**, pyproject.toml, uv.lock, Dockerfile, .github/workflows/deploy.yml]
+    paths: [pruefservice/**, pruefung.py, pruefworkflow.py, referenz/**, training_tools.py, training_data/**,
+            pyproject.toml, uv.lock, Dockerfile, .github/workflows/deploy.yml]
   workflow_dispatch:
 
 permissions:

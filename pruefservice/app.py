@@ -34,6 +34,7 @@ from starlette.responses import JSONResponse
 from starlette.routing import Route
 
 from training_tools import lade_anforderungskatalog, lade_spezifikation, pruefauftrag_laden
+from pruefservice.rest import rest_routes
 
 log = logging.getLogger("pruefservice")
 tracer = trace.get_tracer("pruefservice")
@@ -43,7 +44,7 @@ A2A_PATH = "/a2a"
 API_KEY_HEADER = "X-Api-Key"
 CARD_PATHS = ["/.well-known/agent-card.json", "/.well-known/agent.json"]
 # Copilot Studio sucht die Agent Card zuerst relativ zum Endpunkt (…/a2a/.well-known/…), dann am Stamm.
-PUBLIC_PATHS = {"/", "/health", *CARD_PATHS, *(A2A_PATH + p for p in CARD_PATHS)}
+PUBLIC_PATHS = {"/", "/health", "/openapi.json", *CARD_PATHS, *(A2A_PATH + p for p in CARD_PATHS)}
 
 INSTRUCTIONS = """Du bist der Prüfspezialist von Künz für synthetische Kundenspezifikationen (Training, keine echten Künz-Vorgaben).
 Ablauf für jede Prüfanfrage:
@@ -197,8 +198,9 @@ def build_agent() -> Agent:
 def build_app(agent=None) -> Starlette:
     public_url = os.getenv("PUBLIC_URL", "http://localhost:8000").rstrip("/")
     card = agent_card(public_url)
+    task_store = InMemoryTaskStore()
     handler = DefaultRequestHandler(agent_executor=PruefserviceExecutor(agent or build_agent()),
-                                    task_store=InMemoryTaskStore(), agent_card=card)
+                                    task_store=task_store, agent_card=card)
 
     # Copilot Studio akzeptiert (Stand 29.09.2026) nur v0.3-Agent-Cards; Felder aus v1.0 wie supportedInterfaces
     # führen zu „uses A2A protocol v1, which is not supported yet“. Deshalb die reine v0.3-Fassung ausliefern.
@@ -214,6 +216,8 @@ def build_app(agent=None) -> Starlette:
         Route("/", health),
         Route("/health", health),
         *(Route(prefix + path, agent_card_v03) for path in CARD_PATHS for prefix in ("", A2A_PATH)),
+        # Vor den SDK-Routen: deren /{tenant}-Mount würde /pruefung/{task_id} abfangen.
+        *rest_routes(handler, task_store, public_url, VERSION),
         *create_jsonrpc_routes(handler, A2A_PATH, enable_v0_3_compat=True),
         *create_rest_routes(handler, enable_v0_3_compat=True, path_prefix=A2A_PATH),
     ]

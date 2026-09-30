@@ -1,0 +1,69 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Kuenz-Pruefservice-REST",
+    "version": "1.0.0",
+    "description": "Prüfaufträge gegen den Anforderungskatalog prüfen. REST-Ersatzweg für Copilot Studio; kein A2A-Agent. Ergebnisse sind KI-Vorschläge, die fachliche Freigabe bleibt beim Prüfer."
+  },
+  "basePath": "/",
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "securityDefinitions": {
+    "ApiKey": {"type": "apiKey", "in": "header", "name": "X-Api-Key"}
+  },
+  "security": [{"ApiKey": []}],
+  "paths": {
+    "/pruefung": {
+      "post": {
+        "operationId": "PruefauftragPruefen",
+        "summary": "Prüfauftrag prüfen",
+        "description": "Prüft einen bekannten Prüfauftrag (z. B. PR-001 für SPEC-001 v1/A-100; PR-201 für v2). Liefert die Tabelle R-01 bis R-06 mit Fundstellen und Klärungspunkten als antwort. Fehlende review_id erfragen; nicht erfinden. Laufzeit typischerweise 10 bis 50 Sekunden. Keine menschliche Freigabe und keine Dataverse-Schreibaktion.",
+        "parameters": [{
+          "name": "body", "in": "body", "required": true,
+          "schema": {
+            "type": "object", "required": ["review_id"],
+            "properties": {
+              "review_id": {"type": "string", "description": "Prüfauftrag: PR-001 oder eigene PR-101 bis PR-105 (SPEC-001 v1/A-100), PR-201 (SPEC-001 v2/A-100)."},
+              "context_id": {"type": "string", "description": "Optionaler Korrelationswert für Dienst-Logs, keine Autorisierung; leer weglassen."}
+            }
+          }
+        }],
+        "responses": {
+          "200": {"description": "Prüfung abgeschlossen", "schema": {"$ref": "#/definitions/Pruefergebnis"}},
+          "400": {"description": "Ungültige Eingabe", "schema": {"$ref": "#/definitions/Fehler"}},
+          "401": {"description": "API-Key fehlt oder ist falsch", "schema": {"$ref": "#/definitions/Fehler"}},
+          "404": {"description": "Prüfauftrag unbekannt", "schema": {"$ref": "#/definitions/Fehler"}},
+          "502": {"description": "Prüfung fehlgeschlagen, nicht als Erfolg behandeln", "schema": {"$ref": "#/definitions/Pruefergebnis"}}
+        }
+      }
+    },
+    "/pruefung/{task_id}": {
+      "get": {
+        "operationId": "PruefstatusAbrufen",
+        "summary": "Prüfstatus abrufen",
+        "description": "Liest den gespeicherten Task einer REST-Prüfung ohne erneuten Modellaufruf. task_id aus der vorherigen Prüfantwort verwenden, nicht review_id. Der Speicher ist pro Replik im RAM: nach Neustart kann der Task fehlen. Dies ist Prüfstatus, NICHT menschlicher Freigabestatus aus Dataverse.",
+        "parameters": [{"name": "task_id", "in": "path", "required": true, "type": "string", "description": "task_id aus Prüfauftrag prüfen"}],
+        "responses": {
+          "200": {"description": "Gespeicherter Prüfstatus", "schema": {"$ref": "#/definitions/Pruefergebnis"}},
+          "401": {"description": "API-Key fehlt oder ist falsch", "schema": {"$ref": "#/definitions/Fehler"}},
+          "404": {"description": "Task unbekannt oder nach Neustart verloren", "schema": {"$ref": "#/definitions/Fehler"}}
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Pruefergebnis": {
+      "type": "object",
+      "required": ["review_id", "task_id", "context_id", "status", "antwort", "version"],
+      "properties": {
+        "review_id": {"type": "string", "description": "Kanonische Prüfauftrags-ID"},
+        "task_id": {"type": "string", "description": "Technischer Task, für Statusabfrage aufbewahren"},
+        "context_id": {"type": "string", "description": "Korrelationswert für Trace und Log, keine Nutzeridentität"},
+        "status": {"type": "string", "description": "completed oder failed; completed bedeutet technisch abgeschlossen, nicht fachlich freigegeben"},
+        "antwort": {"type": "string", "description": "Unveränderter Prüftext mit Befunden, Begründungen und Klärungspunkten"},
+        "version": {"type": "string", "description": "Deployte Git-Version"}
+      }
+    },
+    "Fehler": {"type": "object", "properties": {"error": {"type": "string"}}}
+  }
+}

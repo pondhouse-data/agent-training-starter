@@ -42,12 +42,16 @@ class Extraktion(BaseModel):
 # --- Vergleichsregeln (deterministisch) ------------------------------------------------------
 
 def version_mindestens(ist: str, soll: str) -> bool:
-    """R-03: Ist die Protokollversion `ist` mindestens `soll`?
+    """R-03: Ist die Protokollversion `ist` mindestens `soll`? Segmentweise als Ganzzahlen: 2.10 > 2.9."""
+    def segmente(version: str) -> tuple[int, ...]:
+        teile = version.strip().split(".")
+        if any(not teil.isascii() or not teil.isdecimal() for teil in teile):
+            raise ValueError(f"Ungültige Protokollversion: {version!r}")
+        return tuple(int(teil) for teil in teile)
 
-    TODO Ü10: implementieren. Achtung: Versionen sind keine Kommazahlen ("2.10" ist neuer als "2.9").
-    Ungültige Angaben wie "2.x" sollen einen ValueError mit "Ungültige" in der Meldung auslösen.
-    """
-    raise NotImplementedError("TODO Ü10: Versionsvergleich für R-03 fehlt noch")
+    aktuell, minimum = segmente(ist), segmente(soll)
+    laenge = max(len(aktuell), len(minimum))
+    return aktuell + (0,) * (laenge - len(aktuell)) >= minimum + (0,) * (laenge - len(minimum))
 
 
 def _zahl(wert: str) -> float:

@@ -135,11 +135,26 @@ def _normalisiert(text: str) -> str:
     return re.sub(r"\s+", " ", text.replace("−", "-")).strip().casefold()
 
 
+def fremder_gegenstand(anforderung: dict, abschnitt: dict) -> str | None:
+    """Anwendbarkeit: Betrifft der zitierte Abschnitt einen anderen Gegenstand als die Anforderung?
+
+    Die Regel steht im Katalog unter `anwendbarkeit.ausschlussbegriffe`. Kommt einer dieser Begriffe im
+    Titel oder Text des Abschnitts vor, zählt die Fundstelle nicht als Beleg. Beispiel R-05: §6.3 nennt
+    eine Raumtemperatur für Pult und Technikraum, nicht die Betriebstemperatur des Krans.
+    Rückgabe: der gefundene Begriff, sonst None. Anforderungen ohne `anwendbarkeit` werden nicht geprüft.
+    """
+    text = _normalisiert(f"{abschnitt['titel']} {abschnitt['text']}")
+    for begriff in anforderung.get("anwendbarkeit", {}).get("ausschlussbegriffe", []):
+        if _normalisiert(begriff) in text:
+            return begriff
+    return None
+
+
 def vergleiche(extraktion: Extraktion, document_version: str) -> list[dict]:
     """Fundstellen gegen den Originaltext prüfen und jede Katalogregel anwenden. Kein Modellaufruf."""
     dokument = spezifikation_laden(document_version)
     katalog = anforderungskatalog_laden(dokument["asset_id"])
-    abschnitte = {a["abschnitt"]: a["text"] for a in dokument["abschnitte"]}
+    abschnitte = {a["abschnitt"]: a for a in dokument["abschnitte"]}
     angaben = {a.requirement_id: a for a in extraktion.angaben}
 
     befunde = []
@@ -150,11 +165,27 @@ def vergleiche(extraktion: Extraktion, document_version: str) -> list[dict]:
         for fundstelle in angabe.fundstellen if angabe else []:
             # Das Modell schreibt die Abschnittsnummer manchmal als „§2.1“ (so steht sie im Prompt).
             fundstelle = fundstelle.model_copy(update={"abschnitt": fundstelle.abschnitt.strip().lstrip("§").strip()})
-            text = abschnitte.get(fundstelle.abschnitt)
-            if text is not None and fundstelle.zitat.strip() and _normalisiert(fundstelle.zitat) in _normalisiert(text):
+            abschnitt = abschnitte.get(fundstelle.abschnitt)
+            if (abschnitt is not None and fundstelle.zitat.strip()
+                    and _normalisiert(fundstelle.zitat) in _normalisiert(abschnitt["text"])):
                 belegt.append(fundstelle)
             else:
                 verworfen.append(fundstelle)
+
+        # Anwendbarkeit (Katalog, `anwendbarkeit`): Fundstellen zu einem anderen Gegenstand sind kein Beleg.
+        # Bleibt danach nichts übrig, greift die Grundregel „fehlende Angabe = unklar“.
+        anwendbar, fremd = [], []
+        for fundstelle in belegt:
+            begriff = fremder_gegenstand(anforderung, abschnitte[fundstelle.abschnitt])
+            if begriff:
+                fremd.append(f"§{fundstelle.abschnitt} (enthält „{begriff}“)")
+            else:
+                anwendbar.append(fundstelle)
+        belegt = anwendbar
+        hinweis = ""
+        if fremd:
+            hinweis = (f"Betrifft nicht {anforderung['anwendbarkeit']['gegenstand']}, zählt nicht als Beleg: "
+                       f"{'; '.join(fremd)}. ")
 
         if verworfen:
             status, ist, ist_wert = "unklar", None, None
@@ -168,6 +199,7 @@ def vergleiche(extraktion: Extraktion, document_version: str) -> list[dict]:
                 status, ist, ist_wert, begruendung = "unklar", None, None, f"Keine Bewertung: {fehlt}."
             except ValueError as fehler:
                 status, ist, ist_wert, begruendung = "unklar", None, None, f"Angabe nicht auswertbar: {fehler}."
+            begruendung = hinweis + begruendung
 
         befunde.append({
             "requirement_id": rid,

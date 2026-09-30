@@ -9,7 +9,6 @@ REFERENZ = json.loads((Path(__file__).parents[1] / "training_data/referenzbefund
 
 
 @pytest.mark.exercise
-@pytest.mark.skip(reason="Ü11: nach Ü10 Skip entfernen – die Referenztests werden zum PR-Gate")
 @pytest.mark.parametrize("version,requirement", [("1", "R-01"), ("1", "R-03"), ("1", "R-05"), ("2", "R-03"), ("2", "R-04"), ("2", "R-05")])
 def test_referenzbefund(version, requirement):
     from pruefung import pruefe_spezifikation
@@ -22,7 +21,6 @@ def test_referenzbefund(version, requirement):
 
 
 @pytest.mark.exercise
-@pytest.mark.skip(reason="Ü11: nach Ü10 Skip entfernen – die Referenztests werden zum PR-Gate")
 def test_klaerungspunkte_v1():
     from pruefung import pruefe_spezifikation
 

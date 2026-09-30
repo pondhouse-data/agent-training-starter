@@ -8,6 +8,7 @@
     "Fehlt die Angabe in der Spezifikation, ist der Befund 'unklar' – nie automatisch 'erfüllt' oder 'abweichend'.",
     "Widersprechen sich Angaben innerhalb der Spezifikation, ist der Befund 'unklar'; alle widersprüchlichen Fundstellen werden genannt.",
     "Jede Fundstelle muss im Originaltext der geprüften Dokumentversion vorkommen.",
+    "Eine Fundstelle zählt nur, wenn sie den Gegenstand der Anforderung betrifft. Enthält der zitierte Abschnitt einen Ausschlussbegriff der Anforderung (z. B. 'Raumtemperatur' bei R-05), ist sie kein Beleg.",
     "Geprüft wird nur in eine Richtung: Spezifikation gegen diesen Katalog. Kundenforderungen ohne passende interne Anforderung (z. B. SPEC-001 §3.4) sind nicht Teil der Prüfung."
   ],
   "requirements": [
@@ -21,25 +22,29 @@
       "requirement_id": "R-02",
       "thema": "Tragfähigkeit",
       "soll": "Geforderte Tragfähigkeit unter Spreader höchstens 41 t (Bestand A-100, AUE-A100 §2).",
-      "vergleichsregel": {"typ": "maximum", "grenzwert": 41, "einheit": "t"}
+      "vergleichsregel": {"typ": "maximum", "grenzwert": 41, "einheit": "t"},
+      "anwendbarkeit": {"gegenstand": "Kran A-100 (Spreader)", "ausschlussbegriffe": ["Aufstellboden", "Aufstellraum"]}
     },
     {
       "requirement_id": "R-03",
       "thema": "TOS-Schnittstelle",
       "soll": "Fernbetrieb setzt das Künz TOS-Interface ab Protokollversion 2.0 voraus.",
-      "vergleichsregel": {"typ": "version_mindestens", "grenzwert": "2.0"}
+      "vergleichsregel": {"typ": "version_mindestens", "grenzwert": "2.0"},
+      "anwendbarkeit": {"gegenstand": "TOS-Anbindung von A-100", "ausschlussbegriffe": ["Leitstand", "OPC UA"]}
     },
     {
       "requirement_id": "R-04",
       "thema": "Latenz Fernbedienstand–Kran",
       "soll": "Zugesicherte Latenz zwischen Fernbedienstand und Kran höchstens 50 ms.",
-      "vergleichsregel": {"typ": "maximum", "grenzwert": 50, "einheit": "ms"}
+      "vergleichsregel": {"typ": "maximum", "grenzwert": 50, "einheit": "ms"},
+      "anwendbarkeit": {"gegenstand": "Verbindung Fernbedienstand–Kran (Steuerung)", "ausschlussbegriffe": ["Videoaufzeichnung", "Aufzeichnungsserver"]}
     },
     {
       "requirement_id": "R-05",
       "thema": "Betriebstemperatur des Krans",
       "soll": "Die Spezifikation muss den Betriebstemperaturbereich des Krans angeben; er muss innerhalb −20 °C bis +40 °C liegen (AUE-A100 §2).",
-      "vergleichsregel": {"typ": "bereich_innerhalb", "min": -20, "max": 40, "einheit": "°C"}
+      "vergleichsregel": {"typ": "bereich_innerhalb", "min": -20, "max": 40, "einheit": "°C"},
+      "anwendbarkeit": {"gegenstand": "Kran A-100 (Umgebung im Fernbetrieb)", "ausschlussbegriffe": ["Raumtemperatur", "Raumklima", "Aufstellraum", "Innenräume"]}
     },
     {
       "requirement_id": "R-06",

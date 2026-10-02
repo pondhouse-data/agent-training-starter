@@ -60,10 +60,19 @@ jobs:
 
       - name: Rauchtest (Health liefert die neue Version, Agent Card erreichbar)
         run: |
+          VERSION_READY=false
           for i in $(seq 1 30); do
-            if curl -fsS ${{ vars.PUBLIC_URL }}/health | grep -q "\"$VERSION\""; then break; fi
+            if HEALTH=$(curl -fsS "${{ vars.PUBLIC_URL }}/health") && \
+               printf '%s\n' "$HEALTH" | jq -e --arg version "$VERSION" '.status == "ok" and .version == $version' > /dev/null; then
+              VERSION_READY=true
+              break
+            fi
             sleep 10
           done
-          curl -fsS ${{ vars.PUBLIC_URL }}/health
+          if [ "$VERSION_READY" != true ]; then
+            echo "::error::Health liefert nach 30 Versuchen nicht die erwartete Version $VERSION."
+            exit 1
+          fi
+          printf '%s\n' "$HEALTH"
           curl -fsS -o /dev/null ${{ vars.PUBLIC_URL }}/.well-known/agent-card.json
           echo "Deployt: $VERSION → ${{ vars.PUBLIC_URL }}/a2a" >> $GITHUB_STEP_SUMMARY
